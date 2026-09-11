@@ -52,24 +52,24 @@
         </div>
       </div>
 
-      <div id="view-library" class="view" style="display:none;">
-        <div class="lib-toggle">
+      <div id="view-library" class="view" style="display:flex;">
+        <div class="lib-toggle" style="flex-shrink:0;">
           <button id="lib-mode-quotes" class="lib-mode active">Quotes</button>
           <button id="lib-mode-books" class="lib-mode">Books</button>
         </div>
 
-        <div id="lib-quotes-panel">
-          <div style="display:flex;gap:8px;align-items:center;">
+        <div id="lib-quotes-panel" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
             <input id="library-search" type="text" class="finput" placeholder="Search text, author, source…" style="flex:1;" />
             <button id="export-btn" class="ghost-btn">Export</button>
             <button id="import-btn" class="ghost-btn">Import</button>
             <input id="import-file" type="file" accept="application/json" style="display:none;" />
           </div>
-          <div id="library-content"></div>
+          <div id="library-content" class="scroll-region"></div>
         </div>
 
-        <div id="lib-books-panel" style="display:none;">
-          <div class="book-add-row">
+        <div id="lib-books-panel" style="display:none;flex-direction:column;flex:1;min-height:0;">
+          <div class="book-add-row" style="flex-shrink:0;">
             <input id="b-title" type="text" class="finput" placeholder="Book title" />
             <input id="b-author" type="text" class="finput" placeholder="Author" />
             <select id="b-status" class="finput">
@@ -80,7 +80,7 @@
             </select>
             <button id="b-add-btn" class="fbtn-primary" style="align-self:flex-start;">Add book</button>
           </div>
-          <div id="books-content"></div>
+          <div id="books-content" class="scroll-region"></div>
         </div>
       </div>
 
@@ -104,19 +104,24 @@
 #phone {
   width: 100%;
   max-width: 400px;
+  min-height: calc(100vh - 32px);
   margin: 0 auto;
   background: #F4F1EC;
   color: #1E1B16;
   border-radius: 20px;
   overflow: hidden;
   border: 0.5px solid rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
 }
 
 .topbar { display: flex; justify-content: space-between; align-items: baseline; padding: 20px 20px 10px; }
 .topbar-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
 .topbar-count { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
 
-#view-body { padding: 0 20px 16px; min-height: 460px; display: flex; flex-direction: column; }
+#view-body { padding: 0 20px 16px; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.view { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.scroll-region { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 .add-hero { text-align: center; padding: 32px 0 0; flex-shrink: 0; }
 .book-line { fill: none; stroke: #6f6a62; }
@@ -218,9 +223,9 @@ document.getElementById('tab-library').onclick = () => switchTab('library');
 document.getElementById('tab-random').onclick = () => switchTab('random');
 
 function switchTab(tab) {
-  document.getElementById('view-add').style.display = tab === 'add' ? 'block' : 'none';
-  document.getElementById('view-library').style.display = tab === 'library' ? 'block' : 'none';
-  document.getElementById('view-random').style.display = tab === 'random' ? 'block' : 'none';
+  document.getElementById('view-add').style.display = tab === 'add' ? 'flex' : 'none';
+  document.getElementById('view-library').style.display = tab === 'library' ? 'flex' : 'none';
+  document.getElementById('view-random').style.display = tab === 'random' ? 'flex' : 'none';
   document.getElementById('tab-add').className = 'tabbtn' + (tab === 'add' ? ' active' : '');
   document.getElementById('tab-library').className = 'tabbtn' + (tab === 'library' ? ' active' : '');
   document.getElementById('tab-random').className = 'tabbtn' + (tab === 'random' ? ' active' : '');
@@ -526,8 +531,8 @@ document.getElementById('lib-mode-quotes').onclick = () => switchLibMode('quotes
 document.getElementById('lib-mode-books').onclick = () => switchLibMode('books');
 
 function switchLibMode(mode) {
-  document.getElementById('lib-quotes-panel').style.display = mode === 'quotes' ? 'block' : 'none';
-  document.getElementById('lib-books-panel').style.display = mode === 'books' ? 'block' : 'none';
+  document.getElementById('lib-quotes-panel').style.display = mode === 'quotes' ? 'flex' : 'none';
+  document.getElementById('lib-books-panel').style.display = mode === 'books' ? 'flex' : 'none';
   document.getElementById('lib-mode-quotes').className = 'lib-mode' + (mode === 'quotes' ? ' active' : '');
   document.getElementById('lib-mode-books').className = 'lib-mode' + (mode === 'books' ? ' active' : '');
   if (mode === 'books') loadBooks();
@@ -699,7 +704,7 @@ async function showRandomQuote() {
     <div class="random-quote">
       <p class="qtext">${escapeHtml(q.text)}</p>
       <p class="qmeta">${q.author ? escapeHtml(q.author) : 'Unknown'} · ${escapeHtml(sourceTitle)}</p>
-      <p class="random-hint">Swipe up for another</p>
+      <p class="random-hint">Swipe down for another</p>
     </div>
   `;
 }
@@ -708,13 +713,33 @@ let randomGestureLocked = false;
 function triggerNextRandom() {
   if (randomGestureLocked) return;
   randomGestureLocked = true;
-  showRandomQuote();
-  setTimeout(() => { randomGestureLocked = false; }, 500);
+  const resultEl = document.getElementById('random-result');
+  const current = resultEl.querySelector('.random-quote');
+  if (current) {
+    current.style.transition = 'transform 0.22s ease-in, opacity 0.22s ease-in';
+    current.style.transform = 'translateY(24px)';
+    current.style.opacity = '0';
+  }
+  setTimeout(async () => {
+    await showRandomQuote();
+    const fresh = resultEl.querySelector('.random-quote');
+    if (fresh) {
+      fresh.style.transition = 'none';
+      fresh.style.transform = 'translateY(-16px)';
+      fresh.style.opacity = '0';
+      requestAnimationFrame(() => {
+        fresh.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+        fresh.style.transform = 'translateY(0)';
+        fresh.style.opacity = '1';
+      });
+    }
+    randomGestureLocked = false;
+  }, current ? 220 : 0);
 }
 
 const randomView = document.getElementById('view-random');
 randomView.addEventListener('wheel', (e) => {
-  if (Math.abs(e.deltaY) > 15) {
+  if (e.deltaY > 15) {
     e.preventDefault();
     triggerNextRandom();
   }
@@ -724,10 +749,14 @@ let touchStartY = null;
 randomView.addEventListener('touchstart', (e) => {
   touchStartY = e.touches[0].clientY;
 }, { passive: true });
+randomView.addEventListener('touchmove', (e) => {
+  if (touchStartY === null) return;
+  e.preventDefault();
+}, { passive: false });
 randomView.addEventListener('touchend', (e) => {
   if (touchStartY === null) return;
-  const dy = touchStartY - e.changedTouches[0].clientY;
-  if (Math.abs(dy) > 40) triggerNextRandom();
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (dy > 40) triggerNextRandom();
   touchStartY = null;
 }, { passive: true });
 </script>
