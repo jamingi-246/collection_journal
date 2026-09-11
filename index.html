@@ -704,7 +704,7 @@ async function showRandomQuote() {
     <div class="random-quote">
       <p class="qtext">${escapeHtml(q.text)}</p>
       <p class="qmeta">${q.author ? escapeHtml(q.author) : 'Unknown'} · ${escapeHtml(sourceTitle)}</p>
-      <p class="random-hint">Swipe down for another</p>
+      <p class="random-hint">Swipe up for another</p>
     </div>
   `;
 }
@@ -717,7 +717,7 @@ function triggerNextRandom() {
   const current = resultEl.querySelector('.random-quote');
   if (current) {
     current.style.transition = 'transform 0.22s ease-in, opacity 0.22s ease-in';
-    current.style.transform = 'translateY(24px)';
+    current.style.transform = 'translateY(-24px)';
     current.style.opacity = '0';
   }
   setTimeout(async () => {
@@ -725,7 +725,7 @@ function triggerNextRandom() {
     const fresh = resultEl.querySelector('.random-quote');
     if (fresh) {
       fresh.style.transition = 'none';
-      fresh.style.transform = 'translateY(-16px)';
+      fresh.style.transform = 'translateY(16px)';
       fresh.style.opacity = '0';
       requestAnimationFrame(() => {
         fresh.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
@@ -756,7 +756,7 @@ randomView.addEventListener('touchmove', (e) => {
 randomView.addEventListener('touchend', (e) => {
   if (touchStartY === null) return;
   const dy = e.changedTouches[0].clientY - touchStartY;
-  if (dy > 40) triggerNextRandom();
+  if (dy < -40) triggerNextRandom();
   touchStartY = null;
 }, { passive: true });
 </script>
