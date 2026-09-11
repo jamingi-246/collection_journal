@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Collection Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Yeseva+One&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --font-voice: Georgia, 'Times New Roman', serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  body { margin: 0; padding: 16px; background: #E8E4DC; min-height: 100vh; font-family: var(--font-sans); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  @media (min-width: 480px) { body { display: flex; align-items: center; justify-content: center; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <h2 class="sr-only">Commonplace journal</h2>
+
+  <div id="phone">
+    <div class="topbar">
+      <span id="view-label" class="topbar-label">Add</span>
+      <span id="view-count" class="topbar-count"></span>
+    </div>
+
+    <div id="view-body">
+
+      <div id="view-add" class="view">
+        <div class="add-hero">
+          <svg width="96" height="78" viewBox="0 0 56 46" fill="none">
+            <path class="book-line" d="M28 8 C24 5, 14 4, 6 6 L6 38 C14 36, 24 37, 28 40 C32 37, 42 36, 50 38 L50 6 C42 4, 32 5, 28 8 Z" stroke-width="1.4" stroke-linejoin="round"/>
+            <path class="book-line" d="M28 8 L28 40 M12 12 L22 14 M12 18 L22 20 M12 24 L22 26 M44 12 L34 14 M44 18 L34 20 M44 24 L34 26" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <p class="add-tagline">What's stuck with you today and made you pause?</p>
+        </div>
+
+        <div class="add-form">
+          <div id="fly-quote" class="fly-quote"></div>
+          <textarea id="f-text" rows="3" placeholder="Paste or type a passage…" class="finput serif-input"></textarea>
+          <input id="f-author" type="text" class="finput" list="author-suggestions" placeholder="Author" autocomplete="off" />
+          <datalist id="author-suggestions"></datalist>
+          <input id="f-title" type="text" class="finput" list="title-suggestions" placeholder="Title — where it's from" autocomplete="off" />
+          <datalist id="title-suggestions"></datalist>
+          <div id="dup-warning" class="fwarning"></div>
+          <div class="add-actions">
+            <button id="save-btn" class="fbtn-primary">Keeping Memory</button>
+            <span id="save-confirm" class="fsaved">Kept</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-library" class="view" style="display:none;">
+        <div class="lib-toggle">
+          <button id="lib-mode-quotes" class="lib-mode active">Quotes</button>
+          <button id="lib-mode-books" class="lib-mode">Books</button>
+        </div>
+
+        <div id="lib-quotes-panel">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="library-search" type="text" class="finput" placeholder="Search text, author, source…" style="flex:1;" />
+            <button id="export-btn" class="ghost-btn">Export</button>
+            <button id="import-btn" class="ghost-btn">Import</button>
+            <input id="import-file" type="file" accept="application/json" style="display:none;" />
+          </div>
+          <div id="library-content"></div>
+        </div>
+
+        <div id="lib-books-panel" style="display:none;">
+          <div class="book-add-row">
+            <input id="b-title" type="text" class="finput" placeholder="Book title" />
+            <input id="b-author" type="text" class="finput" placeholder="Author" />
+            <select id="b-status" class="finput">
+              <option value="On the list">On the list</option>
+              <option value="In progress">In progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Dropped">Dropped</option>
+            </select>
+            <button id="b-add-btn" class="fbtn-primary" style="align-self:flex-start;">Add book</button>
+          </div>
+          <div id="books-content"></div>
+        </div>
+      </div>
+
+      <div id="view-random" class="view" style="display:none;">
+        <div id="random-chips" class="chips"></div>
+        <div id="random-result"></div>
+      </div>
+
+    </div>
+
+    <nav class="tabbar">
+      <button id="tab-add" class="tabbtn active">Add</button>
+      <button id="tab-library" class="tabbtn">Library</button>
+      <button id="tab-random" class="tabbtn">Random</button>
+    </nav>
+  </div>
+</div>
+
+<style>
+#app { font-family: var(--font-sans, sans-serif); width: 100%; max-width: 400px; margin: 0 auto; }
+#phone {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  background: #F4F1EC;
+  color: #1E1B16;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 0.5px solid rgba(0,0,0,0.08);
+}
+
+.topbar { display: flex; justify-content: space-between; align-items: baseline; padding: 20px 20px 10px; }
+.topbar-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
+.topbar-count { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
+
+#view-body { padding: 0 20px 16px; min-height: 460px; display: flex; flex-direction: column; }
+
+.add-hero { text-align: center; padding: 32px 0 0; flex-shrink: 0; }
+.book-line { fill: none; stroke: #6f6a62; }
+.add-tagline { font-family: var(--font-voice, serif); font-style: italic; font-size: 18px; color: #6f6a62; margin-top: 18px; line-height: 1.4; padding: 0 8px; }
+
+.add-form { display: flex; flex-direction: column; gap: 14px; position: relative; flex: 1; justify-content: flex-end; padding-bottom: 32px; }
+.fly-quote {
+  display: none; position: absolute; left: 0; right: 0; top: 0; text-align: center;
+  font-family: var(--font-voice, serif); font-size: 14px; color: #8C8880;
+  pointer-events: none; z-index: 5; transition: transform 0.7s ease-in, opacity 0.7s ease-in;
+}
+.finput {
+  width: 100%; background: transparent; border: none; border-bottom: 0.5px solid rgba(0,0,0,0.15);
+  padding: 8px 2px; font-size: 14px; color: inherit; font-family: inherit;
+}
+.finput:focus { outline: none; border-bottom-color: #9C4221; }
+.serif-input { font-family: var(--font-voice, serif); font-size: 15px; line-height: 1.5; resize: vertical; }
+.fwarning { font-size: 12px; color: #9C4221; min-height: 0; }
+.add-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+.fbtn-primary { background: #1E1B16; color: #F4F1EC; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; cursor: pointer; }
+.fsaved { display: none; font-size: 12px; color: #6f9c72; }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 4px; }
+.chip { flex-shrink: 0; background: transparent; border: none; font-size: 13px; color: #8C8880; padding: 4px 2px; cursor: pointer; white-space: nowrap; }
+.chip.active { color: #9C4221; border-bottom: 1.5px solid #9C4221; }
+
+.qcard { padding: 14px 0; border-bottom: 0.5px solid rgba(0,0,0,0.1); }
+.qcard-text { font-family: 'Courier Prime', monospace; font-size: 15px; line-height: 1.55; margin: 0 0 6px; }
+.qcard-meta { font-size: 11px; letter-spacing: 0.03em; color: #8C8880; text-transform: uppercase; margin: 0; }
+.qcard-reflection { font-size: 13px; margin: 8px 0 0; padding: 8px 10px; background: rgba(0,0,0,0.03); border-radius: 6px; }
+.qcard-actions { margin-top: 8px; }
+.qcard-actions button { background: transparent; border: none; font-size: 12px; color: #8C8880; cursor: pointer; padding: 2px 6px 2px 0; }
+.qcard-actions button.danger { color: #9C4221; }
+.qedit input, .qedit textarea { margin-bottom: 6px; }
+
+.group-title { font-family: 'Courier Prime', monospace; font-style: italic; font-size: 15px; margin: 18px 0 2px; }
+.group-title:first-child { margin-top: 4px; }
+
+.tabbar { display: flex; border-top: 0.5px solid rgba(0,0,0,0.1); }
+.tabbtn { flex: 1; background: transparent; border: none; padding: 12px 0 14px; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; color: #8C8880; cursor: pointer; border-top: 1.5px solid transparent; }
+.tabbtn.active { color: #1E1B16; border-top-color: #1E1B16; }
+
+.random-quote { padding: 0 4px; text-align: center; }
+.random-quote p.qtext { font-family: 'Yeseva One', serif; font-size: 19px; line-height: 1.6; margin: 0 0 14px; }
+.random-quote p.qmeta { font-size: 12px; color: #8C8880; }
+.random-hint { font-family: var(--font-voice, serif); font-style: italic; font-size: 12px; color: #8C8880; margin-top: 8px; }
+#view-random { touch-action: pan-y; display: flex; flex-direction: column; flex: 1; }
+#random-result { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 380px; }
+
+.lib-toggle { display: flex; gap: 4px; margin-bottom: 14px; background: rgba(0,0,0,0.04); border-radius: 8px; padding: 3px; }
+.lib-mode { flex: 1; background: transparent; border: none; border-radius: 6px; padding: 6px 0; font-size: 12px; letter-spacing: 0.03em; text-transform: uppercase; color: #8C8880; cursor: pointer; }
+.lib-mode.active { background: #F4F1EC; color: #1E1B16; }
+.ghost-btn { background: transparent; border: none; color: #8C8880; font-size: 12px; cursor: pointer; white-space: nowrap; padding: 8px 0; }
+.book-add-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.book-status-title { font-family: 'Courier Prime', monospace; font-style: italic; font-size: 14px; color: #6f6a62; margin: 16px 0 4px; }
+.book-status-title:first-child { margin-top: 0; }
+.book-card { padding: 10px 0; border-bottom: 0.5px solid rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.book-card-info { min-width: 0; }
+.book-card-title { font-size: 14px; margin: 0; }
+.book-card-author { font-size: 12px; color: #8C8880; margin: 2px 0 0; }
+.book-card-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.book-status-select { font-size: 11px; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 5px; background: transparent; padding: 3px 4px; }
+.book-delete-btn { background: transparent; border: none; color: #9C4221; font-size: 12px; cursor: pointer; }
+</style>
+
+<script>
+
+async function getAllEntries() {
+  try {
+    const raw = localStorage.getItem('quotes');
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('getAllEntries error:', e);
+    return [];
+  }
+}
+
+async function saveAllEntries(entries) {
+  try {
+    localStorage.setItem('quotes', JSON.stringify(entries));
+  } catch (e) {
+    throw new Error('save failed: ' + e.message);
+  }
+}
+
+async function populateAuthorSuggestions() {
+  const entries = await getAllEntries();
+  const authors = [...new Set(entries.map(q => q.author).filter(a => a && a.trim()))].sort((a,b) => a.localeCompare(b));
+  document.getElementById('author-suggestions').innerHTML = authors.map(a => `<option value="${escapeHtml(a)}"></option>`).join('');
+  const titles = [...new Set(entries.map(q => q.source && q.source.title).filter(t => t && t.trim()))].sort((a,b) => a.localeCompare(b));
+  document.getElementById('title-suggestions').innerHTML = titles.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
+}
+populateAuthorSuggestions();
+updateTopbarCount();
+
+document.getElementById('tab-add').onclick = () => switchTab('add');
+document.getElementById('tab-library').onclick = () => switchTab('library');
+document.getElementById('tab-random').onclick = () => switchTab('random');
+
+function switchTab(tab) {
+  document.getElementById('view-add').style.display = tab === 'add' ? 'block' : 'none';
+  document.getElementById('view-library').style.display = tab === 'library' ? 'block' : 'none';
+  document.getElementById('view-random').style.display = tab === 'random' ? 'block' : 'none';
+  document.getElementById('tab-add').className = 'tabbtn' + (tab === 'add' ? ' active' : '');
+  document.getElementById('tab-library').className = 'tabbtn' + (tab === 'library' ? ' active' : '');
+  document.getElementById('tab-random').className = 'tabbtn' + (tab === 'random' ? ' active' : '');
+  document.getElementById('view-label').textContent = tab === 'add' ? 'Add' : tab === 'library' ? 'Library' : 'Random';
+  if (tab === 'library') loadLibraryPreview();
+  if (tab === 'random') loadRandomChips();
+  updateTopbarCount();
+}
+
+async function updateTopbarCount() {
+  const entries = await getAllEntries();
+  document.getElementById('view-count').textContent = entries.length + ' kept';
+}
+
+function normalize(s) {
+  return s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function similarity(a, b) {
+  a = normalize(a); b = normalize(b);
+  if (a === b) return 1;
+  const setA = new Set(a.split(' '));
+  const setB = new Set(b.split(' '));
+  const inter = [...setA].filter(w => setB.has(w)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : inter / union;
+}
+
+function checkDuplicate(text, entries) {
+  for (const q of entries) {
+    if (similarity(q.text, text) >= 0.9) return q;
+  }
+  return null;
+}
+
+function animateIntoBook(text) {
+  const icon = document.querySelector('.add-hero svg');
+  const fly = document.getElementById('fly-quote');
+  const iconRect = icon.getBoundingClientRect();
+  const flyRect = fly.getBoundingClientRect();
+  const dx = (iconRect.left + iconRect.width / 2) - (flyRect.left + flyRect.width / 2);
+  const dy = (iconRect.top + iconRect.height / 2) - flyRect.top - 400;
+
+  fly.textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
+  fly.style.transition = 'none';
+  fly.style.transform = 'translate(0,0) scale(1)';
+  fly.style.opacity = '1';
+  fly.style.display = 'block';
+  icon.style.transition = 'transform 0.3s ease';
+
+  requestAnimationFrame(() => {
+    fly.style.transition = 'transform 0.65s ease-in, opacity 0.65s ease-in';
+    fly.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+    fly.style.opacity = '0';
+  });
+
+  setTimeout(() => {
+    icon.style.transform = 'scale(1.1)';
+    setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+  }, 650);
+
+  setTimeout(() => { fly.style.display = 'none'; }, 1000);
+}
+
+document.getElementById('save-btn').onclick = async () => {
+  const text = document.getElementById('f-text').value.trim();
+  const author = document.getElementById('f-author').value.trim();
+  const title = document.getElementById('f-title').value.trim();
+  const warnEl = document.getElementById('dup-warning');
+  warnEl.textContent = '';
+
+  if (!text) { warnEl.textContent = 'Enter a quote first.'; return; }
+  if (!title) { warnEl.textContent = 'Enter where it\'s from.'; return; }
+
+  const entries = await getAllEntries();
+  const dup = checkDuplicate(text, entries);
+  if (dup) {
+    warnEl.textContent = `Looks like a duplicate of one already kept from "${dup.source.title}". Not saved.`;
+    return;
+  }
+
+  const entry = {
+    id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    text, author, source: { title },
+    my_reflection: '',
+    date_added: new Date().toISOString()
+  };
+
+  try {
+    entries.push(entry);
+    await saveAllEntries(entries);
+    animateIntoBook(text);
+    document.getElementById('f-text').value = '';
+    document.getElementById('f-author').value = '';
+    document.getElementById('f-title').value = '';
+    const confirmEl = document.getElementById('save-confirm');
+    confirmEl.style.display = 'inline';
+    setTimeout(() => confirmEl.style.display = 'none', 2000);
+    const authors = [...new Set(entries.map(q => q.author).filter(a => a && a.trim()))].sort((a,b) => a.localeCompare(b));
+    document.getElementById('author-suggestions').innerHTML = authors.map(a => `<option value="${escapeHtml(a)}"></option>`).join('');
+    const titles = [...new Set(entries.map(q => q.source && q.source.title).filter(t => t && t.trim()))].sort((a,b) => a.localeCompare(b));
+    document.getElementById('title-suggestions').innerHTML = titles.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
+    updateTopbarCount();
+  } catch (e) {
+    console.error('Save error:', e);
+    warnEl.textContent = 'Save failed: ' + (e && e.message ? e.message : 'unknown error');
+  }
+};
+
+let libraryEntriesCache = [];
+
+async function loadLibraryPreview() {
+  const el = document.getElementById('library-content');
+  el.innerHTML = `<p style="font-size:13px;color:#8C8880;">Loading…</p>`;
+  libraryEntriesCache = await getAllEntries();
+  document.getElementById('library-search').value = '';
+  renderLibrary(libraryEntriesCache, '');
+}
+
+function renderLibrary(allEntries, searchTerm) {
+  const el = document.getElementById('library-content');
+  const term = searchTerm.trim().toLowerCase();
+  const entries = term
+    ? allEntries.filter(q => {
+        const haystack = [q.text, q.author, q.source && q.source.title, q.source && q.source.episode, q.my_reflection]
+          .filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(term);
+      })
+    : allEntries;
+
+  if (allEntries.length === 0) {
+    el.innerHTML = `<p style="font-size:13px;color:#8C8880;padding-top:20px;">No passages kept yet. Add one from the Add tab.</p>`;
+    return;
+  }
+  if (entries.length === 0) {
+    el.innerHTML = `<p style="font-size:13px;color:#8C8880;padding-top:20px;">Nothing matches "${escapeHtml(searchTerm)}".</p>`;
+    return;
+  }
+
+  const groups = {};
+  entries.forEach(q => {
+    const key = (q.source && q.source.title) ? q.source.title.trim() : 'Untitled source';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(q);
+  });
+  const groupNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+
+  el.innerHTML = groupNames.map(name => `
+    <div class="group-title">${escapeHtml(name)}</div>
+    ${groups[name].map(q => `
+      <div class="qcard" data-quote-id="${q.id}">
+        <div class="view-mode">
+          <p class="qcard-text">${escapeHtml(q.text)}</p>
+          <p class="qcard-meta">${q.author ? escapeHtml(q.author) : 'Unknown'}${q.source && q.source.episode ? ' · ' + escapeHtml(q.source.episode) : ''}</p>
+          ${q.my_reflection ? `<div class="qcard-reflection">${escapeHtml(q.my_reflection)}</div>` : ''}
+          <div class="qcard-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn danger">Delete</button>
+          </div>
+        </div>
+        <div class="edit-mode qedit" style="display:none;">
+          <textarea class="finput serif-input edit-text" rows="2">${escapeHtml(q.text)}</textarea>
+          <input class="finput edit-author" value="${escapeHtml(q.author || '')}" placeholder="Author" />
+          <input class="finput edit-source-title" value="${escapeHtml((q.source && q.source.title) || '')}" placeholder="Source title" />
+          <input class="finput edit-reflection" value="${escapeHtml(q.my_reflection || '')}" placeholder="Reflection" />
+          <div class="qcard-actions">
+            <button class="save-edit-btn">Save</button>
+            <button class="cancel-edit-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+
+  el.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.onclick = () => {
+      const card = btn.closest('[data-quote-id]');
+      card.querySelector('.view-mode').style.display = 'none';
+      card.querySelector('.edit-mode').style.display = 'block';
+    };
+  });
+  el.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+    btn.onclick = () => {
+      const card = btn.closest('[data-quote-id]');
+      card.querySelector('.view-mode').style.display = 'block';
+      card.querySelector('.edit-mode').style.display = 'none';
+    };
+  });
+  el.querySelectorAll('.save-edit-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const card = btn.closest('[data-quote-id]');
+      const id = card.dataset.quoteId;
+      const entry = libraryEntriesCache.find(e => e.id === id);
+      if (!entry) return;
+      const newText = card.querySelector('.edit-text').value.trim();
+      const newSourceTitle = card.querySelector('.edit-source-title').value.trim();
+      if (!newText) { alert('Quote text cannot be empty.'); return; }
+      if (!newSourceTitle) { alert('Source title cannot be empty.'); return; }
+      entry.text = newText;
+      entry.author = card.querySelector('.edit-author').value.trim();
+      entry.my_reflection = card.querySelector('.edit-reflection').value.trim();
+      if (!entry.source) entry.source = {};
+      entry.source.title = newSourceTitle;
+      try {
+        await saveAllEntries(libraryEntriesCache);
+        loadLibraryPreview();
+      } catch (e) { alert('Save failed. Try again.'); }
+    };
+  });
+  el.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const card = btn.closest('[data-quote-id]');
+      const id = card.dataset.quoteId;
+      if (!confirm('Delete this quote? This cannot be undone.')) return;
+      try {
+        const filtered = libraryEntriesCache.filter(e => e.id !== id);
+        await saveAllEntries(filtered);
+        loadLibraryPreview();
+        updateTopbarCount();
+      } catch (e) { alert('Delete failed. Try again.'); }
+    };
+  });
+}
+
+document.getElementById('library-search').oninput = (e) => {
+  renderLibrary(libraryEntriesCache, e.target.value);
+};
+
+document.getElementById('export-btn').onclick = async () => {
+  const entries = await getAllEntries();
+  const filename = 'commonplace-journal-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const file = new File([blob], filename, { type: 'application/json' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Commonplace journal backup',
+        text: 'Backup of your kept quotes.'
+      });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.error('Share failed, falling back to download:', err);
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('import-btn').onclick = () => {
+  document.getElementById('import-file').click();
+};
+
+document.getElementById('import-file').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  let imported;
+  try {
+    const text = await file.text();
+    imported = JSON.parse(text);
+    if (!Array.isArray(imported)) throw new Error('File does not contain a quote list.');
+  } catch (err) {
+    alert('Could not read that file: ' + err.message);
+    return;
+  }
+
+  const current = await getAllEntries();
+  const existingIds = new Set(current.map(q => q.id));
+  let added = 0, skippedDup = 0, skippedId = 0;
+
+  for (const q of imported) {
+    if (!q || !q.text || !q.id) continue;
+    if (existingIds.has(q.id)) { skippedId++; continue; }
+    if (checkDuplicate(q.text, current)) { skippedDup++; continue; }
+    current.push(q);
+    existingIds.add(q.id);
+    added++;
+  }
+
+  try {
+    await saveAllEntries(current);
+    alert(`Import complete: ${added} added, ${skippedDup} skipped as duplicates, ${skippedId} already present.`);
+    if (document.getElementById('view-library').style.display !== 'none') loadLibraryPreview();
+    updateTopbarCount();
+    populateAuthorSuggestions();
+  } catch (err) {
+    alert('Import failed while saving: ' + err.message);
+  }
+};
+
+document.getElementById('lib-mode-quotes').onclick = () => switchLibMode('quotes');
+document.getElementById('lib-mode-books').onclick = () => switchLibMode('books');
+
+function switchLibMode(mode) {
+  document.getElementById('lib-quotes-panel').style.display = mode === 'quotes' ? 'block' : 'none';
+  document.getElementById('lib-books-panel').style.display = mode === 'books' ? 'block' : 'none';
+  document.getElementById('lib-mode-quotes').className = 'lib-mode' + (mode === 'quotes' ? ' active' : '');
+  document.getElementById('lib-mode-books').className = 'lib-mode' + (mode === 'books' ? ' active' : '');
+  if (mode === 'books') loadBooks();
+}
+
+async function getAllBooks() {
+  try {
+    const raw = localStorage.getItem('books');
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('getAllBooks error:', e);
+    return [];
+  }
+}
+
+async function saveAllBooks(books) {
+  try {
+    localStorage.setItem('books', JSON.stringify(books));
+  } catch (e) {
+    throw new Error('save failed: ' + e.message);
+  }
+}
+
+let booksCache = [];
+
+async function loadBooks() {
+  const el = document.getElementById('books-content');
+  el.innerHTML = `<p style="font-size:13px;color:#8C8880;">Loading…</p>`;
+  booksCache = await getAllBooks();
+  renderBooks();
+}
+
+function renderBooks() {
+  const el = document.getElementById('books-content');
+  if (booksCache.length === 0) {
+    el.innerHTML = `<p style="font-size:13px;color:#8C8880;">No books tracked yet.</p>`;
+    return;
+  }
+
+  const statusOrder = ['In progress', 'On the list', 'Completed', 'Dropped'];
+  const groups = {};
+  booksCache.forEach(b => {
+    if (!groups[b.status]) groups[b.status] = [];
+    groups[b.status].push(b);
+  });
+
+  el.innerHTML = statusOrder.filter(s => groups[s] && groups[s].length).map(status => `
+    <div class="book-status-title">${escapeHtml(status)}</div>
+    ${groups[status].map(b => `
+      <div class="book-card" data-book-id="${b.id}">
+        <div class="book-card-info">
+          <p class="book-card-title">${escapeHtml(b.title)}</p>
+          <p class="book-card-author">${b.author ? escapeHtml(b.author) : 'Unknown author'}</p>
+        </div>
+        <div class="book-card-controls">
+          <select class="book-status-select status-select">
+            <option value="On the list"${b.status === 'On the list' ? ' selected' : ''}>On the list</option>
+            <option value="In progress"${b.status === 'In progress' ? ' selected' : ''}>In progress</option>
+            <option value="Completed"${b.status === 'Completed' ? ' selected' : ''}>Completed</option>
+            <option value="Dropped"${b.status === 'Dropped' ? ' selected' : ''}>Dropped</option>
+          </select>
+          <button class="book-delete-btn">Delete</button>
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+
+  el.querySelectorAll('.status-select').forEach(sel => {
+    sel.onchange = async () => {
+      const card = sel.closest('[data-book-id]');
+      const id = card.dataset.bookId;
+      const book = booksCache.find(b => b.id === id);
+      if (!book) return;
+      book.status = sel.value;
+      try {
+        await saveAllBooks(booksCache);
+        renderBooks();
+      } catch (e) { alert('Save failed. Try again.'); }
+    };
+  });
+
+  el.querySelectorAll('.book-delete-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const card = btn.closest('[data-book-id]');
+      const id = card.dataset.bookId;
+      if (!confirm('Remove this book from your tracker?')) return;
+      try {
+        booksCache = booksCache.filter(b => b.id !== id);
+        await saveAllBooks(booksCache);
+        renderBooks();
+      } catch (e) { alert('Delete failed. Try again.'); }
+    };
+  });
+}
+
+document.getElementById('b-add-btn').onclick = async () => {
+  const title = document.getElementById('b-title').value.trim();
+  const author = document.getElementById('b-author').value.trim();
+  const status = document.getElementById('b-status').value;
+  if (!title) { alert('Enter a book title.'); return; }
+
+  const book = {
+    id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    title, author, status,
+    date_added: new Date().toISOString()
+  };
+
+  try {
+    booksCache.push(book);
+    await saveAllBooks(booksCache);
+    document.getElementById('b-title').value = '';
+    document.getElementById('b-author').value = '';
+    document.getElementById('b-status').value = 'On the list';
+    renderBooks();
+  } catch (e) {
+    alert('Save failed: ' + (e && e.message ? e.message : 'unknown error'));
+  }
+};
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+let randomSelectedSource = 'All';
+
+async function loadRandomChips() {
+  const entries = await getAllEntries();
+  const titles = [...new Set(entries.map(q => (q.source && q.source.title) ? q.source.title.trim() : 'Untitled source'))].sort((a,b) => a.localeCompare(b));
+  const chipsEl = document.getElementById('random-chips');
+  const resultEl = document.getElementById('random-result');
+
+  if (titles.length === 0) {
+    chipsEl.innerHTML = '';
+    resultEl.innerHTML = `<p style="font-size:13px;color:#8C8880;padding-top:20px;">No passages kept yet. Add one from the Add tab first.</p>`;
+    return;
+  }
+
+  randomSelectedSource = 'All';
+  const allTitles = ['All', ...titles];
+  chipsEl.innerHTML = allTitles.map(t => `<button class="chip${t === randomSelectedSource ? ' active' : ''}" data-title="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
+  chipsEl.querySelectorAll('.chip').forEach(chip => {
+    chip.onclick = () => {
+      randomSelectedSource = chip.dataset.title;
+      chipsEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.title === randomSelectedSource));
+      showRandomQuote();
+    };
+  });
+  showRandomQuote();
+}
+
+async function showRandomQuote() {
+  const resultEl = document.getElementById('random-result');
+  const entries = await getAllEntries();
+  const pool = randomSelectedSource === 'All'
+    ? entries
+    : entries.filter(q => ((q.source && q.source.title) ? q.source.title.trim() : 'Untitled source') === randomSelectedSource);
+
+  if (pool.length === 0) {
+    resultEl.innerHTML = `<p style="font-size:13px;color:#8C8880;padding-top:20px;">No passages for this source.</p>`;
+    return;
+  }
+
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  const sourceTitle = (q.source && q.source.title) ? q.source.title : 'Untitled source';
+  resultEl.innerHTML = `
+    <div class="random-quote">
+      <p class="qtext">${escapeHtml(q.text)}</p>
+      <p class="qmeta">${q.author ? escapeHtml(q.author) : 'Unknown'} · ${escapeHtml(sourceTitle)}</p>
+      <p class="random-hint">Swipe up for another</p>
+    </div>
+  `;
+}
+
+let randomGestureLocked = false;
+function triggerNextRandom() {
+  if (randomGestureLocked) return;
+  randomGestureLocked = true;
+  showRandomQuote();
+  setTimeout(() => { randomGestureLocked = false; }, 500);
+}
+
+const randomView = document.getElementById('view-random');
+randomView.addEventListener('wheel', (e) => {
+  if (Math.abs(e.deltaY) > 15) {
+    e.preventDefault();
+    triggerNextRandom();
+  }
+}, { passive: false });
+
+let touchStartY = null;
+randomView.addEventListener('touchstart', (e) => {
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+randomView.addEventListener('touchend', (e) => {
+  if (touchStartY === null) return;
+  const dy = touchStartY - e.changedTouches[0].clientY;
+  if (Math.abs(dy) > 40) triggerNextRandom();
+  touchStartY = null;
+}, { passive: true });
+</script>
+</body>
+</html>
