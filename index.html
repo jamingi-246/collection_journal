@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Collection Journal</title>
+<title>Selah</title>
+<meta name="apple-mobile-web-app-title" content="Selah">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Yeseva+One&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
@@ -18,12 +22,12 @@
 </head>
 <body>
 <div id="app">
-  <h2 class="sr-only">Commonplace journal</h2>
+  <h2 class="sr-only">Selah</h2>
 
   <div id="phone">
     <div class="topbar">
-      <span id="view-label" class="topbar-label">Add</span>
-      <span id="view-count" class="topbar-count"></span>
+      <span class="brand"><img src="apple-touch-icon.png" alt="" width="26" height="26"><span class="brand-name">Selah</span></span>
+      <span class="topbar-right"><span id="view-label" class="topbar-label">Add</span><span id="view-count" class="topbar-count"></span></span>
     </div>
 
     <div id="view-body">
@@ -115,7 +119,11 @@
   flex-direction: column;
 }
 
-.topbar { display: flex; justify-content: space-between; align-items: baseline; padding: 20px 20px 10px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 10px; }
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand img { border-radius: 50%; display: block; }
+.brand-name { font-family: var(--font-voice-display, "Yeseva One", serif); font-size: 19px; color: #1E1B16; letter-spacing: 0.02em; }
+.topbar-right { display: flex; gap: 8px; align-items: baseline; }
 .topbar-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
 .topbar-count { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8C8880; }
 
@@ -456,7 +464,7 @@ document.getElementById('library-search').oninput = (e) => {
 
 document.getElementById('export-btn').onclick = async () => {
   const entries = await getAllEntries();
-  const filename = 'commonplace-journal-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  const filename = 'selah-backup-' + new Date().toISOString().slice(0,10) + '.json';
   const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
   const file = new File([blob], filename, { type: 'application/json' });
 
@@ -464,7 +472,7 @@ document.getElementById('export-btn').onclick = async () => {
     try {
       await navigator.share({
         files: [file],
-        title: 'Commonplace journal backup',
+        title: 'Selah backup',
         text: 'Backup of your kept quotes.'
       });
       return;
